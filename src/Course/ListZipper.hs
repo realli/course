@@ -450,8 +450,11 @@ moveRightN' ::
   Int
   -> ListZipper a
   -> Either Int (ListZipper a)
-moveRightN' =
-  error "todo"
+moveRightN' n l = case moveRightN n l of
+                   IsNotZ -> Left . length . (if n < 0 then lefts else rights) $ l
+                   (IsZ rt) -> Right rt
+
+
 
 -- | Move the focus to the given absolute position in the zipper. Traverse the zipper only to the extent required.
 --
@@ -467,8 +470,8 @@ nth ::
   Int
   -> ListZipper a
   -> MaybeListZipper a
-nth =
-  error "todo"
+nth n (ListZipper l x r) = moveRightN n (ListZipper Nil h rt)
+  where (h :. rt) = l ++ (x :. r)
 
 -- | Return the absolute position of the current focus in the zipper.
 --
@@ -479,8 +482,7 @@ nth =
 index ::
   ListZipper a
   -> Int
-index =
-  error "todo"
+index (ListZipper l _ _) = length l
 
 -- | Move the focus to the end of the zipper.
 --
@@ -493,8 +495,8 @@ index =
 end ::
   ListZipper a
   -> ListZipper a
-end =
-  error "todo"
+end lz@(ListZipper _ _ Nil) = lz
+end (ListZipper l x (r:.rs)) = end $ ListZipper (x:.l) r rs
 
 -- | Move the focus to the start of the zipper.
 --
@@ -507,8 +509,8 @@ end =
 start ::
   ListZipper a
   -> ListZipper a
-start =
-  error "todo"
+start lz@(ListZipper Nil _ _) = lz
+start (ListZipper (y:.ys) x r) = start $ ListZipper ys y (x:.r)
 
 -- | Delete the current focus and pull the left values to take the empty position.
 --

@@ -492,7 +492,7 @@ index (ListZipper l _ _) = length l
 end ::
   ListZipper a
   -> ListZipper a
-end l@(ListZipper _ _ Nil) = l
+end lz@(ListZipper _ _ Nil) = lz
 end (ListZipper l x (r:.rs)) = end $ ListZipper (x:.l) r rs
 
 -- | Move the focus to the start of the zipper.

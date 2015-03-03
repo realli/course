@@ -450,8 +450,9 @@ moveRightN' ::
   Int
   -> ListZipper a
   -> Either Int (ListZipper a)
-moveRightN' =
-  error "todo"
+moveRightN' n r = case moveRightN n r of
+                       IsNotZ -> Left . length . (if n < 0 then lefts else rights) $ r
+                       (IsZ rt) -> Right rt
 
 -- | Move the focus to the given absolute position in the zipper. Traverse the zipper only to the extent required.
 --
@@ -467,8 +468,7 @@ nth ::
   Int
   -> ListZipper a
   -> MaybeListZipper a
-nth =
-  error "todo"
+nth n = moveRightN n . start
 
 -- | Return the absolute position of the current focus in the zipper.
 --
@@ -479,8 +479,7 @@ nth =
 index ::
   ListZipper a
   -> Int
-index =
-  error "todo"
+index (ListZipper l _ _) = length l
 
 -- | Move the focus to the end of the zipper.
 --
@@ -493,8 +492,8 @@ index =
 end ::
   ListZipper a
   -> ListZipper a
-end =
-  error "todo"
+end l@(ListZipper _ _ Nil) = l
+end (ListZipper l x (r:.rs)) = end $ ListZipper (x:.l) r rs
 
 -- | Move the focus to the start of the zipper.
 --
@@ -507,8 +506,8 @@ end =
 start ::
   ListZipper a
   -> ListZipper a
-start =
-  error "todo"
+start l@(ListZipper Nil _ _) = l
+start (ListZipper (l:.ls) x r) = start $ ListZipper ls l (x:.r)
 
 -- | Delete the current focus and pull the left values to take the empty position.
 --
@@ -520,8 +519,8 @@ start =
 deletePullLeft ::
   ListZipper a
   -> MaybeListZipper a
-deletePullLeft =
-  error "todo"
+deletePullLeft (ListZipper Nil _ _) = IsNotZ
+deletePullLeft (ListZipper (l:.ls) _ r) = IsZ $ ListZipper ls l r
 
 -- | Delete the current focus and pull the right values to take the empty position.
 --
@@ -533,8 +532,8 @@ deletePullLeft =
 deletePullRight ::
   ListZipper a
   -> MaybeListZipper a
-deletePullRight =
-  error "todo"
+deletePullRight (ListZipper _ _ Nil) = IsNotZ
+deletePullRight (ListZipper l _ (r:.rs)) = IsZ $ ListZipper l r rs
 
 -- | Insert at the current focus and push the left values to make way for the new position.
 --
@@ -549,8 +548,7 @@ insertPushLeft ::
   a
   -> ListZipper a
   -> ListZipper a
-insertPushLeft =
-  error "todo"
+insertPushLeft n (ListZipper l x r) = ListZipper (x:.l) n r
 
 -- | Insert at the current focus and push the right values to make way for the new position.
 --
@@ -565,8 +563,7 @@ insertPushRight ::
   a
   -> ListZipper a
   -> ListZipper a
-insertPushRight =
-  error "todo"
+insertPushRight n (ListZipper l x r) = ListZipper l n (x:.r)
 
 -- | Implement the `Apply` instance for `ListZipper`.
 -- This implementation zips functions with values by function application.

@@ -187,7 +187,7 @@ data Digit =
   | Seven
   | Eight
   | Nine
-  deriving (Eq, Enum, Bounded)
+  deriving (Eq, Enum, Bounded, Show)
 
 showDigit ::
   Digit
@@ -323,5 +323,68 @@ fromChar _ =
 dollars ::
   Chars
   -> Chars
-dollars =
-  error "todo"
+dollars x = let (d, c) = toDot (dropWhile (`notElem` ('.':.listh['1'..'9'])) x)
+                c' = case listOptional fromChar c of
+                          Nil -> "zero cents"
+                          (Zero:.One:.Nil) -> "one cent"
+                          (a:.b:._) -> showDigit3 (D2 a b) ++ " cents"
+                          (a:._) -> showDigit3 (D2 a Zero) ++ " cents"
+                d' = case d of
+                          Nil -> "zero dollars"
+                          (One:.Nil) -> "one dollar"
+                          _ -> illionate d ++ " dollars"
+             in d' ++ " and " ++ c'
+
+
+showDigit3 :: Digit3 -> List Char
+showDigit3 d = let x .++. y = x ++ if y == Zero then Nil else '-' :. showDigit y
+               in case d of
+                       D1 a -> showDigit a
+                       D2 Zero b -> showDigit b
+                       D2 One b -> case b of
+                                        Zero -> "ten"
+                                        One -> "eleven"
+                                        Two -> "twelve"
+                                        Three -> "thirteen"
+                                        Four -> "fourteen"
+                                        Five -> "fifteen"
+                                        Six -> "sixteen"
+                                        Seven -> "seventeen"
+                                        Eight -> "eighteen"
+                                        Nine -> "nineteen"
+                       D2 Two b -> "twenty" .++. b
+                       D2 Three b -> "thirty" .++. b
+                       D2 Four b -> "forty" .++. b
+                       D2 Five b -> "fifty" .++. b
+                       D2 Six b -> "sixty" .++. b
+                       D2 Seven b -> "seventy" .++. b
+                       D2 Eight b -> "eighty" .++. b
+                       D2 Nine b -> "ninety" .++. b
+                       D3 Zero Zero Zero -> ""
+                       D3 Zero b c -> showDigit3 (D2 b c)
+                       D3 a Zero Zero -> showDigit a ++ " hundred"
+                       D3 a b c -> showDigit a ++ " hundred and " ++ showDigit3 (D2 b c)
+
+
+toDot :: Chars -> (List Digit, Chars) -- ^ the list digit part is reversed
+toDot s = toDot' s Nil
+  where toDot' Nil x = (x, Nil)
+        toDot' (h:.t) ds = case fromChar h of
+                                Full n -> toDot' t (n :. ds)
+                                Empty -> if h == '.'
+                                         then (ds, t)
+                                         else toDot' t ds
+
+illionate :: List Digit -> Chars
+illionate = unwords . todigits Nil illion
+  where todigits acc _ Nil = acc
+        todigits _ Nil _ = error "maybe too big"
+        todigits acc (_:.is) (Zero:.Zero:.Zero:.t) = todigits acc is t
+        todigits acc (i:.is) (c:.b:.a:.t) = 
+          todigits ((showDigit3 (D3 a b c) ++ space i) :. acc) is t
+        todigits acc _ (Zero:.Zero:.Nil) = acc
+        todigits acc (i:._) (r:.s:.Nil) = (showDigit3 (D2 s r) ++ space i) :. acc
+        todigits acc _ (Zero:.Nil) = acc
+        todigits acc (i:._) (s:.Nil) = (showDigit3 (D1 s) ++ space i) :. acc
+        space "" = ""
+        space x = ' ' :. x
